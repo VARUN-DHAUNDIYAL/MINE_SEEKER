@@ -1,26 +1,40 @@
-# utils/dataset.py
-import torch
-import numpy as np
+# scripts/train.py
 import os
-from torch.utils.data import Dataset
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from utils.dataset import RFDataset
+from models.rf_landmine_model import RFClassifier  # Rename your model file as needed
+from config import CONFIG
+import yaml
 
-class RFDataset(Dataset):
-    def __init__(self, data_dir, label_file=None):
-        self.data_dir = data_dir
-        self.data_files = [f for f in os.listdir(data_dir) if f.endswith('.npy')]
-        self.labels = np.load(label_file) if label_file else None
-
-    def __len__(self):
-        return len(self.data_files)
+def train_model():
+    device = torch.device(CONFIG["DEVICE"])
+    dataset = RFDataset(CONFIG["DATA_PROCESSED_DIR"])  # Assumes processed .npy files
+    dataloader = DataLoader(dataset, batch_size=CONFIG["BATCH_SIZE"], shuffle=True)
     
-    def __getitem__(self, idx):
-        file_path = os.path.join(self.data_dir, self.data_files[idx])
-        data = np.load(file_path)
-        
-        # Ensure correct shape (2, N)
-        data = torch.tensor(data, dtype=torch.float32).unsqueeze(0)
-        
-        # Get label if available
-        label = torch.tensor(self.labels[idx]) if self.labels is not None else torch.tensor(0)
+    model = RFClassifier().to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=CONFIG["LEARNING_RATE"])
 
-        return data, label
+    for epoch in range(CONFIG["EPOCHS"]):
+        running_loss = 0.0
+        for i, (inputs, labels) in enumerate(dataloader):
+            inputs, labels = inputs.to(device), labels.to(device)
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+            if i % 10 == 0:
+                print(f"Epoch [{epoch+1}/{CONFIG['EPOCHS']}], Step [{i}/{len(dataloader)}], Loss: {loss.item():.4f}")
+        print(f"Epoch [{epoch+1}] Average Loss: {running_loss/len(dataloader):.4f}")
+    
+    os.makedirs(os.path.dirname(CONFIG["MODEL_SAVE_PATH"]), exist_ok=True)
+    torch.save(model.state_dict(), CONFIG["MODEL_SAVE_PATH"])
+    print("[INFO] Model training complete and saved!")
+
+if __name__ == "__main__":
+    train_model()
