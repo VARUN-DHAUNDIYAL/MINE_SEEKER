@@ -1,0 +1,12 @@
+# config.yaml
+DATA_RAW_DIR: "data/raw/"
+DATA_PROCESSED_DIR: "data/processed/"
+MODEL_SAVE_PATH: "models/rf_landmine_model.pth"
+BATCH_SIZE: 64
+EPOCHS: 20
+LEARNING_RATE: 0.001
+DEVICE: "cuda"   # Use "cpu" if GPU is not available
+SAMPLE_RATE: 10000000    # 10 MHz
+CENTER_FREQ: 2400000000  # 2.4 GHz
+GAIN: 40
+NUM_SAMPLES: 1000000     # Number of IQ samples per acquisition
