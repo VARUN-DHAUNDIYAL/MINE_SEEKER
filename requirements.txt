@@ -1,0 +1,16 @@
+numpy
+scipy
+matplotlib
+tqdm
+scikit-learn
+argparse
+pyyaml
+torch
+torchvision
+torchaudio
+uhd
+onnx
+onnxruntime
+tensorrt
+paho-mqtt
+Flask
